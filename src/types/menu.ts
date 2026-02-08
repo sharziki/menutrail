@@ -9,6 +9,7 @@ export interface MenuItem {
   price: number
   comparePrice?: number
   image?: string
+  images?: string[]  // Multi-photo support
   tags?: string[]
   dietaryTags?: string[]
   spiceLevel?: number
@@ -41,6 +42,18 @@ export interface Category {
   items: MenuItem[]
 }
 
+export interface Menu {
+  id: string
+  name: string
+  description?: string
+  isActive: boolean
+  availableFrom?: string
+  availableTo?: string
+  availableDays?: string[]
+  layoutType?: LayoutType
+  categories: Category[]
+}
+
 export interface Restaurant {
   id: string
   slug: string
@@ -53,6 +66,9 @@ export interface Restaurant {
   secondaryColor: string
   fontFamily: string
   categories: Category[]
+  menus?: Menu[]  // Multiple menus support
+  ctaText?: string  // Custom CTA button text
+  ctaUrl?: string   // Custom CTA button URL
 }
 
 export interface Theme {

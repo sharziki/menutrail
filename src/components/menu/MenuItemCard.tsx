@@ -1,6 +1,7 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Plus, Flame, Leaf, Star } from "lucide-react"
 import { MenuItem } from "@/types/menu"
@@ -15,12 +16,50 @@ interface MenuItemCardProps {
   className?: string
 }
 
+// Hook for cycling through images on hover
+function useImageCycle(images: string[], interval = 800) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isHovering, setIsHovering] = useState(false)
+
+  useEffect(() => {
+    if (!isHovering || images.length <= 1) {
+      setCurrentIndex(0)
+      return
+    }
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length)
+    }, interval)
+
+    return () => clearInterval(timer)
+  }, [isHovering, images.length, interval])
+
+  return {
+    currentIndex,
+    currentImage: images[currentIndex] || images[0],
+    onMouseEnter: () => setIsHovering(true),
+    onMouseLeave: () => {
+      setIsHovering(false)
+      setCurrentIndex(0)
+    },
+    isHovering,
+    hasMultiple: images.length > 1,
+  }
+}
+
 export function MenuItemCard({ 
   item, 
   variant = 'grid', 
   onAdd,
   className 
 }: MenuItemCardProps) {
+  // Combine single image and images array
+  const allImages = item.images?.length 
+    ? item.images 
+    : (item.image ? [item.image] : [])
+  
+  const imageState = useImageCycle(allImages)
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -47,24 +86,53 @@ export function MenuItemCard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -4 }}
+        onMouseEnter={imageState.onMouseEnter}
+        onMouseLeave={imageState.onMouseLeave}
         className={cn(
           "group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer",
           !item.isAvailable && "opacity-60",
           className
         )}
       >
-        {/* Image */}
+        {/* Image with hover cycling */}
         <div className="relative aspect-square overflow-hidden">
-          {item.image ? (
-            <Image
-              src={item.image}
-              alt={item.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+          {allImages.length > 0 ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={imageState.currentIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={imageState.currentImage}
+                  alt={item.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </motion.div>
+            </AnimatePresence>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
               <span className="text-4xl">🍽</span>
+            </div>
+          )}
+          
+          {/* Image dots indicator for multi-photo items */}
+          {imageState.hasMultiple && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              {allImages.map((_, idx) => (
+                <motion.div
+                  key={idx}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-colors",
+                    idx === imageState.currentIndex ? "bg-white" : "bg-white/50"
+                  )}
+                  animate={{ scale: idx === imageState.currentIndex ? 1.2 : 1 }}
+                />
+              ))}
             </div>
           )}
           
@@ -125,21 +193,48 @@ export function MenuItemCard({
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         whileHover={{ x: 4 }}
+        onMouseEnter={imageState.onMouseEnter}
+        onMouseLeave={imageState.onMouseLeave}
         className={cn(
           "flex gap-4 p-4 bg-white rounded-xl hover:bg-gray-50 transition-colors cursor-pointer",
           !item.isAvailable && "opacity-60",
           className
         )}
       >
-        {/* Image (smaller) */}
-        {item.image && (
+        {/* Image (smaller) with hover cycling */}
+        {allImages.length > 0 && (
           <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
-            <Image
-              src={item.image}
-              alt={item.name}
-              fill
-              className="object-cover"
-            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={imageState.currentIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={imageState.currentImage}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                />
+              </motion.div>
+            </AnimatePresence>
+            {/* Dots indicator */}
+            {imageState.hasMultiple && imageState.isHovering && (
+              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
+                {allImages.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "w-1 h-1 rounded-full",
+                      idx === imageState.currentIndex ? "bg-white" : "bg-white/50"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -231,22 +326,42 @@ export function MenuItemCard({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
+        onMouseEnter={imageState.onMouseEnter}
+        onMouseLeave={imageState.onMouseLeave}
         className={cn(
-          "relative h-[70vh] min-h-[500px] rounded-3xl overflow-hidden",
+          "relative h-[70vh] min-h-[500px] rounded-3xl overflow-hidden group",
           !item.isAvailable && "opacity-60",
           className
         )}
       >
-        {/* Background Image */}
-        {item.image ? (
-          <Image
-            src={item.image}
-            alt={item.name}
-            fill
-            className="object-cover"
-          />
+        {/* Background Image with hover cycling */}
+        {allImages.length > 0 ? (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={imageState.currentIndex}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={imageState.currentImage}
+                alt={item.name}
+                fill
+                className="object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
+        )}
+        
+        {/* Image counter for multi-photo items */}
+        {imageState.hasMultiple && (
+          <div className="absolute top-6 right-6 bg-black/50 text-white px-3 py-1 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            {imageState.currentIndex + 1} / {allImages.length}
+          </div>
         )}
         
         {/* Gradient Overlay */}
@@ -288,24 +403,53 @@ export function MenuItemCard({
       animate={{ opacity: 1, y: 0 }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
+      onMouseEnter={imageState.onMouseEnter}
+      onMouseLeave={imageState.onMouseLeave}
       className={cn(
-        "bg-white rounded-3xl overflow-hidden shadow-lg cursor-grab active:cursor-grabbing",
+        "bg-white rounded-3xl overflow-hidden shadow-lg cursor-grab active:cursor-grabbing group",
         !item.isAvailable && "opacity-60",
         className
       )}
     >
-      {/* Image */}
+      {/* Image with hover cycling */}
       <div className="relative aspect-[4/3] overflow-hidden">
-        {item.image ? (
-          <Image
-            src={item.image}
-            alt={item.name}
-            fill
-            className="object-cover"
-          />
+        {allImages.length > 0 ? (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={imageState.currentIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={imageState.currentImage}
+                alt={item.name}
+                fill
+                className="object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <span className="text-6xl">🍽️</span>
+          </div>
+        )}
+        
+        {/* Image dots indicator */}
+        {imageState.hasMultiple && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {allImages.map((_, idx) => (
+              <motion.div
+                key={idx}
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  idx === imageState.currentIndex ? "bg-white" : "bg-white/50"
+                )}
+                animate={{ scale: idx === imageState.currentIndex ? 1.2 : 1 }}
+              />
+            ))}
           </div>
         )}
       </div>

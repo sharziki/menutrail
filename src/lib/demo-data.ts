@@ -1,4 +1,4 @@
-import { Category } from "@/types/menu"
+import { Category, Menu } from "@/types/menu"
 
 // Demo menu items
 export const demoCategories: Category[] = [
@@ -13,6 +13,11 @@ export const demoCategories: Category[] = [
         description: "Lightly breaded calamari rings served with marinara sauce and lemon aioli",
         price: 14.99,
         image: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&auto=format&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1604909052743-94e838986d24?w=800&auto=format&fit=crop",
+        ],
         tags: ["popular"],
         dietaryTags: [],
         isAvailable: true,
@@ -61,6 +66,11 @@ export const demoCategories: Category[] = [
         description: "Fresh Atlantic salmon with lemon herb butter, served with seasonal vegetables and rice",
         price: 28.99,
         image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&auto=format&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1485921325833-c519f76c4927?w=800&auto=format&fit=crop",
+        ],
         tags: ["popular"],
         dietaryTags: ["gluten-free"],
         calories: 650,
@@ -72,6 +82,11 @@ export const demoCategories: Category[] = [
         description: "12oz USDA Prime ribeye, grilled to perfection with garlic butter and crispy fries",
         price: 42.99,
         image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&auto=format&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1558030006-450675393462?w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop",
+        ],
         tags: ["popular"],
         dietaryTags: ["gluten-free"],
         calories: 980,
@@ -224,6 +239,43 @@ export const demoCategories: Category[] = [
   },
 ]
 
+// Demo menus for multiple menus support
+export const demoMenus: Menu[] = [
+  {
+    id: "menu-lunch",
+    name: "Lunch",
+    description: "Available 11am - 3pm",
+    isActive: true,
+    availableFrom: "11:00",
+    availableTo: "15:00",
+    availableDays: ["mon", "tue", "wed", "thu", "fri"],
+    layoutType: "grid",
+    categories: demoCategories.slice(0, 3), // Starters, Mains, Pasta
+  },
+  {
+    id: "menu-dinner",
+    name: "Dinner",
+    description: "Available 5pm - 10pm",
+    isActive: true,
+    availableFrom: "17:00",
+    availableTo: "22:00",
+    availableDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+    layoutType: "grid",
+    categories: demoCategories, // Full menu
+  },
+  {
+    id: "menu-brunch",
+    name: "Weekend Brunch",
+    description: "Saturday & Sunday 10am - 2pm",
+    isActive: true,
+    availableFrom: "10:00",
+    availableTo: "14:00",
+    availableDays: ["sat", "sun"],
+    layoutType: "card",
+    categories: demoCategories.slice(0, 2), // Starters, Mains
+  },
+]
+
 export const demoRestaurant = {
   id: "demo",
   slug: "demo-bistro",
@@ -235,4 +287,7 @@ export const demoRestaurant = {
   secondaryColor: "#1e40af",
   fontFamily: "inter",
   categories: demoCategories,
+  menus: demoMenus,
+  ctaText: "Book a Table",
+  ctaUrl: "https://opentable.com",
 }

@@ -1,0 +1,89 @@
+# MenuTrail Docker Compose
+# For production deployment on VPS
+
+version: '3.8'
+
+services:
+  # ============================================
+  # MenuTrail Web Application
+  # ============================================
+  menutrail:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: menutrail-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - DOORDASH_DEVELOPER_ID=${DOORDASH_DEVELOPER_ID}
+      - DOORDASH_KEY_ID=${DOORDASH_KEY_ID}
+      - DOORDASH_SIGNING_SECRET=${DOORDASH_SIGNING_SECRET}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - UPLOADTHING_SECRET=${UPLOADTHING_SECRET}
+      - UPLOADTHING_APP_ID=${UPLOADTHING_APP_ID}
+      - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
+    networks:
+      - menutrail-network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # Redis (for caching & rate limiting)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: menutrail-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - menutrail-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Nginx Reverse Proxy (optional, for SSL)
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: menutrail-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/certbot:/var/www/certbot:ro
+    networks:
+      - menutrail-network
+    depends_on:
+      - menutrail
+    profiles:
+      - with-nginx
+
+networks:
+  menutrail-network:
+    driver: bridge
+
+volumes:
+  redis-data:

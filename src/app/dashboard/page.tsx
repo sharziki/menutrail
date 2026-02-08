@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { 
@@ -24,8 +24,39 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-// Demo analytics data
-const STATS = {
+// Types for dashboard data
+interface DashboardStats {
+  todayRevenue: number
+  todayOrders: number
+  avgOrderValue: number
+  newCustomers: number
+  revenueChange: number
+  ordersChange: number
+}
+
+interface TopItem {
+  name: string
+  orders: number
+  revenue: number
+}
+
+interface TopCustomer {
+  name: string
+  orders: number
+  spent: number
+  lastOrder: string
+}
+
+interface RecentOrder {
+  id: string
+  customer: string
+  total: number
+  status: string
+  type: string
+}
+
+// Demo fallback data
+const DEMO_STATS: DashboardStats = {
   todayRevenue: 1247.50,
   todayOrders: 34,
   avgOrderValue: 36.69,
@@ -34,7 +65,7 @@ const STATS = {
   ordersChange: 8.2,
 }
 
-const TOP_ITEMS = [
+const DEMO_TOP_ITEMS: TopItem[] = [
   { name: "Truffle Mushroom Burger", orders: 45, revenue: 854.55 },
   { name: "Sweet Potato Fries", orders: 38, revenue: 265.62 },
   { name: "Craft Lemonade", orders: 32, revenue: 159.68 },
@@ -42,14 +73,14 @@ const TOP_ITEMS = [
   { name: "Caesar Salad", orders: 24, revenue: 311.76 },
 ]
 
-const TOP_CUSTOMERS = [
+const DEMO_TOP_CUSTOMERS: TopCustomer[] = [
   { name: "John Smith", orders: 12, spent: 456.78, lastOrder: "2 days ago" },
   { name: "Sarah Johnson", orders: 8, spent: 312.50, lastOrder: "1 week ago" },
   { name: "Mike Chen", orders: 6, spent: 198.25, lastOrder: "Yesterday" },
   { name: "Emily Davis", orders: 5, spent: 167.90, lastOrder: "3 days ago" },
 ]
 
-const RECENT_ORDERS = [
+const DEMO_RECENT_ORDERS: RecentOrder[] = [
   { id: "MT-001", customer: "John S.", total: 42.50, status: "preparing", type: "delivery" },
   { id: "MT-002", customer: "Sarah J.", total: 67.25, status: "ready", type: "pickup" },
   { id: "MT-003", customer: "Table 5", total: 89.00, status: "new", type: "dine_in" },
@@ -58,6 +89,53 @@ const RECENT_ORDERS = [
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [stats, setStats] = useState<DashboardStats>(DEMO_STATS)
+  const [topItems, setTopItems] = useState<TopItem[]>(DEMO_TOP_ITEMS)
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>(DEMO_TOP_CUSTOMERS)
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>(DEMO_RECENT_ORDERS)
+  const [, setIsLoading] = useState(true)
+
+  // Fetch real data on mount
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const [statsRes, itemsRes, customersRes, ordersRes] = await Promise.all([
+          fetch("/api/dashboard/stats"),
+          fetch("/api/dashboard/top-items"),
+          fetch("/api/dashboard/top-customers"),
+          fetch("/api/dashboard/recent-orders"),
+        ])
+
+        const [statsData, itemsData, customersData, ordersData] = await Promise.all([
+          statsRes.json(),
+          itemsRes.json(),
+          customersRes.json(),
+          ordersRes.json(),
+        ])
+
+        // Only update if we got real data
+        if (statsData.todayRevenue !== undefined) {
+          setStats(statsData)
+        }
+        if (itemsData.items?.length > 0) {
+          setTopItems(itemsData.items)
+        }
+        if (customersData.customers?.length > 0) {
+          setTopCustomers(customersData.customers)
+        }
+        if (ordersData.orders?.length > 0) {
+          setRecentOrders(ordersData.orders)
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error)
+        // Keep demo data on error
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -153,12 +231,12 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-green-600" />
                 </div>
-                <Badge className={STATS.revenueChange >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-                  {STATS.revenueChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                  {Math.abs(STATS.revenueChange)}%
+                <Badge className={stats.revenueChange >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                  {stats.revenueChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                  {Math.abs(stats.revenueChange)}%
                 </Badge>
               </div>
-              <p className="text-2xl font-bold">${STATS.todayRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold">${stats.todayRevenue.toFixed(2)}</p>
               <p className="text-sm text-gray-500">Today&apos;s Revenue</p>
             </motion.div>
 
@@ -172,12 +250,12 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <ShoppingBag className="w-6 h-6 text-blue-600" />
                 </div>
-                <Badge className="bg-green-100 text-green-700">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {STATS.ordersChange}%
+                <Badge className={stats.ordersChange >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                  {stats.ordersChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                  {Math.abs(stats.ordersChange)}%
                 </Badge>
               </div>
-              <p className="text-2xl font-bold">{STATS.todayOrders}</p>
+              <p className="text-2xl font-bold">{stats.todayOrders}</p>
               <p className="text-sm text-gray-500">Today&apos;s Orders</p>
             </motion.div>
 
@@ -192,7 +270,7 @@ export default function DashboardPage() {
                   <Clock className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
-              <p className="text-2xl font-bold">${STATS.avgOrderValue.toFixed(2)}</p>
+              <p className="text-2xl font-bold">${stats.avgOrderValue.toFixed(2)}</p>
               <p className="text-sm text-gray-500">Avg Order Value</p>
             </motion.div>
 
@@ -207,7 +285,7 @@ export default function DashboardPage() {
                   <Users className="w-6 h-6 text-orange-600" />
                 </div>
               </div>
-              <p className="text-2xl font-bold">{STATS.newCustomers}</p>
+              <p className="text-2xl font-bold">{stats.newCustomers}</p>
               <p className="text-sm text-gray-500">New Customers</p>
             </motion.div>
           </div>
@@ -225,7 +303,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <div className="divide-y divide-gray-100">
-                {RECENT_ORDERS.map(order => (
+                {recentOrders.map(order => (
                   <div key={order.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
                     <div className="flex items-center gap-4">
                       <div>
@@ -262,7 +340,7 @@ export default function DashboardPage() {
                 <h2 className="font-semibold">Top Selling Items</h2>
               </div>
               <div className="p-4 space-y-4">
-                {TOP_ITEMS.slice(0, 5).map((item, i) => (
+                {topItems.slice(0, 5).map((item, i) => (
                   <div key={item.name} className="flex items-center gap-3">
                     <span className={cn(
                       "w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium",
@@ -304,7 +382,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {TOP_CUSTOMERS.map(customer => (
+                  {topCustomers.map(customer => (
                     <tr key={customer.name} className="hover:bg-gray-50 transition">
                       <td className="p-4">
                         <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   Clock, 
@@ -159,12 +159,38 @@ const TYPE_CONFIG: Record<OrderType, { label: string; icon: React.ElementType }>
   delivery: { label: "Delivery", icon: Truck },
 }
 
+// Order status flow for backward navigation - Item 18
+const STATUS_ORDER: OrderStatus[] = ["new", "preparing", "ready", "out_for_delivery", "completed"]
+
 export default function OrdersDashboard() {
   const [orders, setOrders] = useState<Order[]>(DEMO_ORDERS)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [filter, setFilter] = useState<OrderStatus | "all">("all")
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [search, setSearch] = useState("")
+  const [autoPrint, setAutoPrint] = useState(true) // Item 19 - Auto print
+  
+  // Audio refs for order sounds - Item 17
+  const pickupSoundRef = useRef<HTMLAudioElement | null>(null)
+  const deliverySoundRef = useRef<HTMLAudioElement | null>(null)
+  const previousOrdersRef = useRef<string[]>([])
+  
+  // Initialize audio elements
+  useEffect(() => {
+    // Create pickup sound - 6 seconds (Item 17)
+    pickupSoundRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleR0BFDaS4PdLKyIESx9Y6ehgQAkALzKc7uUjHx4mYSBd7eMvDAguWCc54ewjEhsxZiEu6+slDw0vXB4g6e0oCww1YBgU5u4pCAw5ZxEK4+8rBQw+bAsC4fAsAwxEcgb/3/AvAQxIeAH72/AyAAFMfvzy1/E1/wBRhPnv1PI3/v5WivbrzPQ6/P1bkPToz/Y9+/xglvHi0Pg/+fphm+/d0vo/+Ptloe3Yz/w++Ppppu3Ty/47+PxurfDNx/87+P50s/PKxQE7+AB5uPbHwgM7+AR+vPnFvwU8+Ah/wPvCvQc8+AuBwP3BvAg9+A2Bv/++ugk8+A+Bvf69uQo7+BCBu/y7uAs5+ROBuPq5tgw4+RWAtfi3tQ03+RiAtPaztg82+Rp/svS0tRE1+hx+sPS0tBEz+h5+rvOztBMy+iF+rPKyshQx+iN9q/GyshUv+iZ9qvCyshYu+id9qfCxsRcu+il8qO+xsRgt+ip8p++xsRks+ix8pu6wsRkr+i58pe6wsRoq+jB8pe6wsRso+jF7pO6wsRwn+jN7pO2vsBym+jR7o+2vsByF+jV6o+2vsByE+jd6ouyvsByC+jh6ouyvsByA+jp6oeyvsRx/+jt5oeyvsBx++jx5oeuvsBx8+j55oeuvsBx7+j95oOuvsBx6+kB5oOuvsBx5+kF5oOqusRx4+kJ5n+qusRx3+kN5n+qusRx2+kR4n+qusRx1+kV4n+musRx0+kZ4numusRxz+kd4numusRxy+kh4numusRxx+kl4nuiusRxw+kp3neiusRxv+kt3neiusRxu+kx3neitsRxt+k13neiusRxs")
+    // Create delivery sound
+    deliverySoundRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleR0BFDaS4PdLKyIESx9Y6ehgQAkALzKc7uUjHx4mYSBd7eMvDAguWCc54ewjEhsxZiEu6+slDw0vXB4g6e0oCww1YBgU5u4pCAw5ZxEK4+8rBQw+bAsC4fAsAwxEcgb/3/AvAQxIeAH72/AyAAFMfvzy1/E1/wBRhPnv1PI3/v5WivbrzPQ6/P1bkPToz/Y9+/xglvHi0Pg/+fphm+/d0vo/+Ptloe3Yz/w++Ppppu3Ty/47+PxurfDNx/87+P50s/PKxQE7+AB5uPbHwgM7+AR+vPnFvwU8+Ah/wPvCvQc8+AuBwP3BvAg9+A2Bv/++ugk8+A+Bvf69uQo7+BCBu/y7uAs5+ROBuPq5tgw4+RWAtfi3tQ03+RiAtPaztg82+Rp/svS0tRE1+hx+sPS0tBEz+h5+rvOztBMy+iF+rPKyshQx+iN9q/GyshUv+iZ9qvCyshYu+id9qfCxsRcu+il8qO+xsRgt+ip8p++xsRks+ix8pu6wsRkr+i58pe6wsRoq+jB8pe6wsRso+jF7pO6wsRwn+jN7pO2vsBym+jR7o+2vsByF+jV6o+2vsByE+jd6ouyvsByC+jh6ouyvsByA+jp6oeyvsRx/+jt5oeyvsBx++jx5oeuvsBx8+j55oeuvsBx7+j95oOuvsBx6+kB5oOuvsBx5+kF5oOqusRx4+kJ5n+qusRx3+kN5n+qusRx2+kR4n+qusRx1+kV4n+musRx0+kZ4numusRxz+kd4numusRxy+kh4numusRxx+kl4nuiusRxw+kp3neiusRxv+kt3neiusRxu+kx3neitsRxt+k13neiusRxs")
+  }, [])
+  
+  // (Note: Order sound and auto-print effect is defined after printOrder)
+  
+  // Get previous status for backward navigation - Item 18
+  const getPreviousStatus = (currentStatus: OrderStatus): OrderStatus | null => {
+    const currentIndex = STATUS_ORDER.indexOf(currentStatus)
+    if (currentIndex <= 0) return null
+    return STATUS_ORDER[currentIndex - 1]
+  }
 
   // Filter orders
   const filteredOrders = orders.filter(order => {
@@ -191,7 +217,7 @@ export default function OrdersDashboard() {
     out_for_delivery: filteredOrders.filter(o => o.status === "out_for_delivery"),
   }
 
-  // Update order status
+  // Update order status - Item 18: now supports going backwards
   const updateStatus = useCallback((orderId: string, newStatus: OrderStatus) => {
     setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
@@ -200,6 +226,16 @@ export default function OrdersDashboard() {
       setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null)
     }
   }, [selectedOrder])
+  
+  // Move order backwards - Item 18
+  const moveOrderBack = useCallback((orderId: string) => {
+    const order = orders.find(o => o.id === orderId)
+    if (!order) return
+    const prevStatus = getPreviousStatus(order.status)
+    if (prevStatus) {
+      updateStatus(orderId, prevStatus)
+    }
+  }, [orders, updateStatus])
 
   // Print order
   const printOrder = useCallback((order: Order) => {
@@ -251,6 +287,40 @@ export default function OrdersDashboard() {
     printWindow.document.close()
     printWindow.print()
   }, [])
+  
+  // Handle new orders - play sound and auto-print (Items 17 & 19)
+  useEffect(() => {
+    if (!soundEnabled && !autoPrint) return
+    
+    const currentOrderIds = orders.map(o => o.id)
+    const newOrders = orders.filter(o => 
+      o.status === "new" && !previousOrdersRef.current.includes(o.id)
+    )
+    
+    newOrders.forEach(order => {
+      // Play appropriate sound - pickup is 6 seconds (Item 17)
+      if (soundEnabled) {
+        if (order.type === "pickup" && pickupSoundRef.current) {
+          pickupSoundRef.current.currentTime = 0
+          pickupSoundRef.current.play().catch(() => {})
+          // Pickup sound plays for 6 seconds
+          setTimeout(() => {
+            pickupSoundRef.current?.pause()
+          }, 6000)
+        } else if (deliverySoundRef.current) {
+          deliverySoundRef.current.currentTime = 0
+          deliverySoundRef.current.play().catch(() => {})
+        }
+      }
+      
+      // Auto-print new orders regardless of acceptance (Item 19)
+      if (autoPrint) {
+        printOrder(order)
+      }
+    })
+    
+    previousOrdersRef.current = currentOrderIds
+  }, [orders, soundEnabled, autoPrint, printOrder])
 
   // Time since order
   const getTimeSince = (date: Date) => {
@@ -290,8 +360,17 @@ export default function OrdersDashboard() {
               variant="outline"
               size="icon"
               onClick={() => setSoundEnabled(!soundEnabled)}
+              title={soundEnabled ? "Sound on" : "Sound off"}
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant={autoPrint ? "default" : "outline"}
+              size="icon"
+              onClick={() => setAutoPrint(!autoPrint)}
+              title={autoPrint ? "Auto-print on" : "Auto-print off"}
+            >
+              <Printer className={cn("w-4 h-4", autoPrint && "text-white")} />
             </Button>
             <Button variant="outline" size="icon">
               <RefreshCw className="w-4 h-4" />
@@ -409,8 +488,20 @@ export default function OrdersDashboard() {
                       </div>
                     </div>
                     
-                    {/* Quick Actions */}
+                    {/* Quick Actions - Item 18: Added backward button */}
                     <div className="px-3 pb-3 flex gap-2">
+                      {/* Backward button - Item 18 */}
+                      {status !== "new" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-gray-500 hover:text-gray-700"
+                          onClick={(e) => { e.stopPropagation(); moveOrderBack(order.id) }}
+                          title="Move back to previous status"
+                        >
+                          ←
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"

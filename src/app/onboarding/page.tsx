@@ -15,19 +15,31 @@ import {
   Loader2,
   ExternalLink,
   Copy,
-  CheckCircle2
+  CheckCircle2,
+  Store
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete"
+
+interface RestaurantAddress {
+  street: string
+  city: string
+  state: string
+  zip: string
+  lat: number
+  lng: number
+}
 
 const STEPS = [
-  { id: 1, title: "Stripe", icon: CreditCard, desc: "Accept payments" },
-  { id: 2, title: "Delivery", icon: Truck, desc: "DoorDash setup" },
-  { id: 3, title: "Menu", icon: Upload, desc: "Add your items" },
-  { id: 4, title: "Branding", icon: Palette, desc: "Customize look" },
-  { id: 5, title: "Launch", icon: Link2, desc: "Go live!" },
+  { id: 1, title: "Info", icon: Store, desc: "Restaurant details" },
+  { id: 2, title: "Stripe", icon: CreditCard, desc: "Accept payments" },
+  { id: 3, title: "Delivery", icon: Truck, desc: "DoorDash setup" },
+  { id: 4, title: "Menu", icon: Upload, desc: "Add your items" },
+  { id: 5, title: "Branding", icon: Palette, desc: "Customize look" },
+  { id: 6, title: "Launch", icon: Link2, desc: "Go live!" },
 ]
 
 export default function OnboardingPage() {
@@ -46,6 +58,11 @@ export default function OnboardingPage() {
   const [doordashKeyId, setDoordashKeyId] = useState("")
   const [doordashSigningSecret, setDoordashSigningSecret] = useState("")
   const [skipDelivery, setSkipDelivery] = useState(false)
+
+  // Restaurant Info
+  const [restaurantName, setRestaurantName] = useState("")
+  const [restaurantAddress, setRestaurantAddress] = useState<RestaurantAddress | null>(null)
+  const [addressInput, setAddressInput] = useState("")
 
   // Branding
   const [primaryColor, setPrimaryColor] = useState("#f97316")
@@ -135,8 +152,67 @@ export default function OnboardingPage() {
 
         {/* Step Content */}
         <AnimatePresence mode="wait">
-          {/* Step 1: Stripe */}
+          {/* Step 1: Restaurant Info */}
           {step === 1 && (
+            <motion.div
+              key="restaurant-info"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
+                  <Store className="w-8 h-8 text-orange-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Restaurant Details</h2>
+                  <p className="text-gray-600">Tell us about your restaurant</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label>Restaurant Name</Label>
+                  <Input
+                    placeholder="My Awesome Restaurant"
+                    value={restaurantName}
+                    onChange={(e) => setRestaurantName(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label>Restaurant Address</Label>
+                  <AddressAutocomplete
+                    value={addressInput}
+                    onChange={setAddressInput}
+                    onSelect={(address) => setRestaurantAddress(address)}
+                    placeholder="Start typing your address..."
+                  />
+                  {restaurantAddress && (
+                    <div className="mt-2 p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                      <p className="font-medium">✓ Address verified</p>
+                      <p>{restaurantAddress.street}, {restaurantAddress.city}, {restaurantAddress.state} {restaurantAddress.zip}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <Button 
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-600"
+                  onClick={nextStep}
+                  disabled={!restaurantName}
+                >
+                  Continue
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Stripe */}
+          {step === 2 && (
             <motion.div
               key="stripe"
               initial={{ opacity: 0, x: 20 }}
@@ -225,8 +301,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 2: DoorDash */}
-          {step === 2 && (
+          {/* Step 3: DoorDash */}
+          {step === 3 && (
             <motion.div
               key="doordash"
               initial={{ opacity: 0, x: 20 }}
@@ -325,8 +401,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 3: Menu */}
-          {step === 3 && (
+          {/* Step 4: Menu */}
+          {step === 4 && (
             <motion.div
               key="menu"
               initial={{ opacity: 0, x: 20 }}
@@ -392,8 +468,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 4: Branding */}
-          {step === 4 && (
+          {/* Step 5: Branding */}
+          {step === 5 && (
             <motion.div
               key="branding"
               initial={{ opacity: 0, x: 20 }}
@@ -469,8 +545,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 5: Launch */}
-          {step === 5 && (
+          {/* Step 6: Launch */}
+          {step === 6 && (
             <motion.div
               key="launch"
               initial={{ opacity: 0, x: 20 }}

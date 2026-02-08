@@ -105,6 +105,8 @@ model Restaurant {
   orders        Order[]
   customers     Customer[]
   tables        Table[]
+  giftCards     GiftCard[]
+  settings      RestaurantSettings?
   
   @@index([slug])
 }
@@ -493,4 +495,89 @@ enum TableStatus {
   OCCUPIED
   RESERVED
   CLEANING
+}
+
+// ============================================
+// GIFT CARDS
+// ============================================
+
+model GiftCard {
+  id              String    @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  code            String    @unique  // XXXX-XXXX-XXXX format
+  
+  // Amounts
+  initialAmount   Float
+  currentBalance  Float
+  
+  // Purchaser
+  purchaserEmail  String
+  purchaserName   String
+  
+  // Recipient (optional for gifting)
+  recipientEmail  String?
+  recipientName   String?
+  message         String?
+  
+  // Status
+  isActive        Boolean   @default(true)
+  purchasedAt     DateTime  @default(now())
+  expiresAt       DateTime?
+  
+  // Payment
+  stripePaymentId String?
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  transactions    GiftCardTransaction[]
+  
+  @@index([restaurantId])
+  @@index([code])
+}
+
+model GiftCardTransaction {
+  id            String    @id @default(cuid())
+  giftCardId    String
+  giftCard      GiftCard  @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  
+  amount        Float     // Negative for redemption, positive for reload
+  balanceAfter  Float
+  type          String    // PURCHASE, REDEMPTION, RELOAD, REFUND
+  orderId       String?   // Reference to order if redemption
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([giftCardId])
+  @@index([orderId])
+}
+
+// ============================================
+// INTEGRATION SETTINGS
+// ============================================
+
+model RestaurantSettings {
+  id              String    @id @default(cuid())
+  restaurantId    String    @unique
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  // DoorDash Settings
+  doordashSandboxMode     Boolean @default(true)
+  
+  // Go High Level Settings
+  ghlApiKey               String?
+  ghlLocationId           String?
+  ghlEnabled              Boolean @default(false)
+  
+  // Gift Card Settings
+  giftCardsEnabled        Boolean @default(true)
+  giftCardExpirationDays  Int     @default(365)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

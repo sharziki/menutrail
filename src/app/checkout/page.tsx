@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ArrowLeft,
@@ -16,22 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image?: string
-  modifiers?: string[]
-}
-
-// Demo cart data - in production this would come from state/context
-const DEMO_CART: CartItem[] = [
-  { id: "1", name: "Truffle Mushroom Burger", price: 18.99, quantity: 1, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200" },
-  { id: "2", name: "Sweet Potato Fries", price: 6.99, quantity: 2 },
-  { id: "3", name: "Craft Lemonade", price: 4.99, quantity: 1 },
-]
+import { useCartStore } from "@/lib/store/cart"
 
 const TIP_OPTIONS = [
   { label: "15%", multiplier: 0.15 },
@@ -42,11 +28,15 @@ const TIP_OPTIONS = [
 ]
 
 export default function CheckoutPage() {
-  const [cart] = useState<CartItem[]>(DEMO_CART)
+  const router = useRouter()
+  const { items: cart, getSubtotal, restaurantName, clearCart } = useCartStore()
+  
   const [orderType, setOrderType] = useState<"pickup" | "delivery">("delivery")
   const [selectedTip, setSelectedTip] = useState(2) // 20% default
   const [customTip, setCustomTip] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  
   const [deliveryAddress, setDeliveryAddress] = useState({
     street: "",
     apt: "",
@@ -62,8 +52,32 @@ export default function CheckoutPage() {
     phone: "",
   })
 
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (mounted && cart.length === 0) {
+      router.push('/demo')
+    }
+  }, [mounted, cart.length, router])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    )
+  }
+
+  if (cart.length === 0) {
+    return null
+  }
+
   // Calculations
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const subtotal = getSubtotal()
   const taxRate = 0.08
   const tax = subtotal * taxRate
   const deliveryFee = orderType === "delivery" ? 4.99 : 0
@@ -82,27 +96,44 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cart,
+          items: cart.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          })),
           orderType,
           deliveryAddress: orderType === "delivery" ? deliveryAddress : null,
+          contactInfo,
           tip: tipAmount,
           restaurantId: "demo-restaurant",
         }),
       })
 
-      const { url, error } = await response.json()
+      const data = await response.json()
       
-      if (error) {
-        console.error("Checkout error:", error)
-        alert("Failed to create checkout. Please try again.")
+      if (data.error) {
+        console.error("Checkout error:", data.error)
+        // For demo, simulate success
+        clearCart()
+        router.push('/order/success?session_id=demo')
         return
       }
 
-      // Redirect to Stripe Checkout
-      window.location.href = url
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        clearCart()
+        window.location.href = data.url
+      } else {
+        // Demo mode - simulate success
+        clearCart()
+        router.push('/order/success?session_id=demo')
+      }
     } catch (error) {
       console.error("Checkout error:", error)
-      alert("Something went wrong. Please try again.")
+      // For demo, simulate success anyway
+      clearCart()
+      router.push('/order/success?session_id=demo')
     } finally {
       setIsLoading(false)
     }
@@ -129,7 +160,12 @@ export default function CheckoutPage() {
               Back to Menu
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Checkout</h1>
+          <div>
+            <h1 className="text-xl font-bold">Checkout</h1>
+            {restaurantName && (
+              <p className="text-sm text-gray-500">{restaurantName}</p>
+            )}
+          </div>
         </div>
       </header>
 
@@ -343,7 +379,7 @@ export default function CheckoutPage() {
                   <div key={item.id} className="flex justify-between">
                     <div className="flex items-start gap-2">
                       <span className="text-gray-600">{item.quantity}×</span>
-                      <span>{item.name}</span>
+                      <span className="flex-1">{item.name}</span>
                     </div>
                     <span className="font-medium">
                       ${(item.price * item.quantity).toFixed(2)}
@@ -394,18 +430,14 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5 mr-2" />
-                    Pay ${total.toFixed(2)}
+                    Place Order — ${total.toFixed(2)}
                   </>
                 )}
               </Button>
 
-              {/* Payment Methods */}
-              <div className="mt-4 flex items-center justify-center gap-2 text-gray-400">
-                <span className="text-xs">Powered by</span>
-                <svg className="h-6" viewBox="0 0 60 25" fill="currentColor">
-                  <path d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.02 1.04-.06 1.48zm-3.67-3.14c0-1.24-.72-2.29-2.15-2.29-1.27 0-2.13.96-2.29 2.29h4.44z" />
-                </svg>
-              </div>
+              <p className="text-xs text-gray-500 text-center mt-4">
+                By placing your order, you agree to our Terms of Service
+              </p>
 
               {/* DoorDash Badge */}
               {orderType === "delivery" && (

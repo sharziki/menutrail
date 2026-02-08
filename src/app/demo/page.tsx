@@ -2,33 +2,44 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { demoCategories, demoRestaurant } from "@/lib/demo-data"
 import { MenuDisplay } from "@/components/menu/MenuDisplay"
 import { LayoutType, LAYOUT_CONFIG, MenuItem } from "@/types/menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, X } from "lucide-react"
+import { ShoppingCart, X, Plus, Minus, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useCartStore } from "@/lib/store/cart"
 
 export default function DemoPage() {
+  const router = useRouter()
   const [activeLayout, setActiveLayout] = useState<LayoutType>('grid')
-  const [cart, setCart] = useState<Array<MenuItem & { quantity: number }>>([])
   const [showCart, setShowCart] = useState(false)
+  
+  // Use cart store
+  const { items: cart, addItem, updateQuantity, removeItem, getTotal, getCount, setRestaurant } = useCartStore()
 
   const handleAddItem = (item: MenuItem) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id)
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        )
-      }
-      return [...prev, { ...item, quantity: 1 }]
+    // Set restaurant context on first add
+    if (cart.length === 0) {
+      setRestaurant('demo', demoRestaurant.name)
+    }
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
     })
   }
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const cartTotal = getTotal()
+  const cartCount = getCount()
+
+  const handleCheckout = () => {
+    setShowCart(false)
+    router.push('/checkout')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -159,12 +170,41 @@ export default function DemoPage() {
                           <div className="flex-1">
                             <h3 className="font-medium">{item.name}</h3>
                             <p className="text-sm text-gray-500">
-                              ${item.price.toFixed(2)} × {item.quantity}
+                              ${item.price.toFixed(2)} each
                             </p>
                           </div>
-                          <span className="font-semibold">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="w-8 text-center font-medium">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold">
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500 hover:text-red-600"
+                              onClick={() => removeItem(item.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -178,8 +218,12 @@ export default function DemoPage() {
                       <span className="text-gray-600">Subtotal</span>
                       <span className="text-xl font-bold">${cartTotal.toFixed(2)}</span>
                     </div>
-                    <Button className="w-full" size="lg">
-                      Checkout
+                    <Button 
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-600" 
+                      size="lg"
+                      onClick={handleCheckout}
+                    >
+                      Proceed to Checkout
                     </Button>
                   </div>
                 )}
@@ -194,7 +238,7 @@ export default function DemoPage() {
         <motion.button
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="fixed bottom-6 left-4 right-4 bg-primary text-white py-4 px-6 rounded-full shadow-lg flex items-center justify-between md:hidden"
+          className="fixed bottom-6 left-4 right-4 bg-gradient-to-r from-orange-500 to-red-600 text-white py-4 px-6 rounded-full shadow-lg flex items-center justify-between md:hidden"
           onClick={() => setShowCart(true)}
         >
           <span className="flex items-center gap-2">

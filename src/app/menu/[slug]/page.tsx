@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ShoppingCart, 
@@ -11,16 +12,18 @@ import {
   MapPin, 
   Clock,
   Star,
-  Search
+  Search,
+  Trash2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { useCartStore } from "@/lib/store/cart"
 
 // Demo restaurant data - in production this would be fetched based on slug
 const RESTAURANT = {
+  id: "demo",
   name: "The Burger Joint",
   description: "Handcrafted burgers made with love since 2015",
   logo: null,
@@ -53,21 +56,21 @@ const MENU_ITEMS = [
   { id: "9", categoryId: "5", name: "Brownie Sundae", description: "Warm brownie, vanilla ice cream, hot fudge, whipped cream", price: 8.99, image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400", calories: 780 },
 ]
 
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  modifiers?: { name: string; price: number }[]
-}
-
 export default function PublicMenuPage({ params: _params }: { params: { slug: string } }) {
   void _params // Will be used to fetch restaurant data
-  const [cart, setCart] = useState<CartItem[]>([])
+  const router = useRouter()
+  const { items: cart, addItem, updateQuantity, removeItem, getTotal, getCount, setRestaurant } = useCartStore()
+  
   const [showCart, setShowCart] = useState(false)
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].id)
   const [search, setSearch] = useState("")
   const [selectedItem, setSelectedItem] = useState<typeof MENU_ITEMS[0] | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Filter items
   const filteredItems = MENU_ITEMS.filter(item => {
@@ -77,33 +80,27 @@ export default function PublicMenuPage({ params: _params }: { params: { slug: st
     return item.categoryId === activeCategory
   })
 
-  // Cart functions
-  const addToCart = (item: typeof MENU_ITEMS[0], modifiers?: { name: string; price: number }[]) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === item.id)
-      if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
-      }
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1, modifiers }]
+  // Add to cart
+  const handleAddToCart = (item: typeof MENU_ITEMS[0]) => {
+    if (cart.length === 0) {
+      setRestaurant(RESTAURANT.id, RESTAURANT.name)
+    }
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
     })
     setSelectedItem(null)
   }
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCart(prev => {
-      return prev.map(item => {
-        if (item.id === id) {
-          const newQty = item.quantity + delta
-          if (newQty <= 0) return null
-          return { ...item, quantity: newQty }
-        }
-        return item
-      }).filter(Boolean) as CartItem[]
-    })
-  }
+  const cartTotal = mounted ? getTotal() : 0
+  const cartCount = mounted ? getCount() : 0
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const handleCheckout = () => {
+    setShowCart(false)
+    router.push('/checkout')
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -273,12 +270,10 @@ export default function PublicMenuPage({ params: _params }: { params: { slug: st
                     <Badge variant="outline">{selectedItem.calories} calories</Badge>
                   )}
                 </div>
-
-                {/* TODO: Add modifiers/customization UI here */}
                 
                 <Button 
                   className="w-full h-14 text-lg bg-gradient-to-r from-orange-500 to-red-600"
-                  onClick={() => addToCart(selectedItem)}
+                  onClick={() => handleAddToCart(selectedItem)}
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Add to Cart — ${selectedItem.price.toFixed(2)}
@@ -290,7 +285,7 @@ export default function PublicMenuPage({ params: _params }: { params: { slug: st
       </AnimatePresence>
 
       {/* Cart Button */}
-      {cartCount > 0 && !showCart && (
+      {mounted && cartCount > 0 && !showCart && (
         <motion.button
           initial={{ y: 100 }}
           animate={{ y: 0 }}
@@ -339,18 +334,18 @@ export default function PublicMenuPage({ params: _params }: { params: { slug: st
                 ) : (
                   <div className="space-y-4">
                     {cart.map(item => (
-                      <div key={item.id} className="flex items-center gap-4">
-                        <div className="flex items-center border border-gray-200 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center border border-gray-200 rounded-lg bg-white">
                           <button
                             className="p-2 hover:bg-gray-100"
-                            onClick={() => updateQuantity(item.id, -1)}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           >
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="px-3 font-medium">{item.quantity}</span>
                           <button
                             className="p-2 hover:bg-gray-100"
-                            onClick={() => updateQuantity(item.id, 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -359,7 +354,15 @@ export default function PublicMenuPage({ params: _params }: { params: { slug: st
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-gray-500">${item.price.toFixed(2)} each</p>
                         </div>
-                        <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                        <div className="text-right">
+                          <span className="font-medium block">${(item.price * item.quantity).toFixed(2)}</span>
+                          <button
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -372,11 +375,12 @@ export default function PublicMenuPage({ params: _params }: { params: { slug: st
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-bold text-xl">${cartTotal.toFixed(2)}</span>
                   </div>
-                  <Link href="/checkout">
-                    <Button className="w-full h-14 text-lg bg-gradient-to-r from-orange-500 to-red-600">
-                      Checkout
-                    </Button>
-                  </Link>
+                  <Button 
+                    className="w-full h-14 text-lg bg-gradient-to-r from-orange-500 to-red-600"
+                    onClick={handleCheckout}
+                  >
+                    Checkout
+                  </Button>
                 </div>
               )}
             </motion.div>

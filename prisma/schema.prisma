@@ -1,0 +1,351 @@
+// MenuTrail - Restaurant Management Platform
+// Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// RESTAURANT (Tenant)
+// ============================================
+model Restaurant {
+  id                String    @id @default(cuid())
+  slug              String    @unique // URL slug: menutrail.com/r/joes-pizza
+  
+  // Basic Info
+  name              String
+  description       String?
+  cuisine           String?   // "Italian", "Mexican", etc.
+  
+  // Contact
+  email             String
+  phone             String?
+  website           String?
+  
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String    @default("US")
+  latitude          Float?
+  longitude         Float?
+  
+  // Branding
+  logo              String?
+  coverImage        String?
+  
+  // Theme
+  layoutType        String    @default("grid") // grid, list, card, tabs, hero, compact
+  primaryColor      String    @default("#2563eb")
+  secondaryColor    String    @default("#1e40af")
+  fontFamily        String    @default("inter") // inter, playfair, roboto, etc.
+  
+  // Settings
+  timezone          String    @default("America/New_York")
+  currency          String    @default("USD")
+  taxRate           Float     @default(0)
+  
+  // Ordering Settings
+  pickupEnabled     Boolean   @default(true)
+  deliveryEnabled   Boolean   @default(false)
+  deliveryRadius    Float?    // miles
+  deliveryFee       Float     @default(0)
+  minimumOrder      Float     @default(0)
+  
+  // Hours (JSON: { monday: { open: "09:00", close: "21:00" }, ... })
+  businessHours     Json?
+  
+  // Status
+  isActive          Boolean   @default(true)
+  isLive            Boolean   @default(false) // Published and accepting orders
+  
+  // Stripe
+  stripeAccountId   String?
+  stripeOnboarded   Boolean   @default(false)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  owner             User      @relation(fields: [ownerId], references: [id])
+  ownerId           String
+  categories        Category[]
+  menuItems         MenuItem[]
+  orders            Order[]
+  
+  @@index([slug])
+  @@index([ownerId])
+}
+
+// ============================================
+// USER (Restaurant Owner)
+// ============================================
+model User {
+  id                String    @id @default(cuid())
+  
+  email             String    @unique
+  passwordHash      String?
+  
+  firstName         String?
+  lastName          String?
+  phone             String?
+  avatar            String?
+  
+  // Auth
+  emailVerified     Boolean   @default(false)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+  
+  // Relations
+  restaurants       Restaurant[]
+  
+  @@index([email])
+}
+
+// ============================================
+// MENU STRUCTURE
+// ============================================
+model Category {
+  id                String    @id @default(cuid())
+  restaurantId      String
+  restaurant        Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  name              String
+  description       String?
+  image             String?
+  
+  // Ordering
+  sortOrder         Int       @default(0)
+  
+  // Availability
+  isActive          Boolean   @default(true)
+  availableFrom     String?   // "11:00" - for lunch-only categories
+  availableUntil    String?   // "14:00"
+  availableDays     Json?     // ["monday", "tuesday", ...]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  items             MenuItem[]
+  
+  @@index([restaurantId])
+  @@index([sortOrder])
+}
+
+model MenuItem {
+  id                String    @id @default(cuid())
+  restaurantId      String
+  restaurant        Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name              String
+  description       String?
+  price             Float
+  comparePrice      Float?    // Original price for showing discount
+  
+  // Images
+  image             String?
+  images            Json?     // Array of image URLs for gallery
+  
+  // Ordering
+  sortOrder         Int       @default(0)
+  
+  // Dietary & Tags
+  tags              Json?     // ["popular", "new", "spicy"]
+  dietaryTags       Json?     // ["vegetarian", "vegan", "gluten-free", "dairy-free", "halal", "kosher"]
+  spiceLevel        Int?      // 0-5
+  calories          Int?
+  
+  // Availability
+  isActive          Boolean   @default(true)
+  isAvailable       Boolean   @default(true) // Can be temporarily unavailable (86'd)
+  availableFrom     String?
+  availableUntil    String?
+  availableDays     Json?
+  
+  // Inventory
+  trackInventory    Boolean   @default(false)
+  inventoryCount    Int?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  modifierGroups    ModifierGroup[]
+  orderItems        OrderItem[]
+  
+  @@index([restaurantId])
+  @@index([categoryId])
+  @@index([sortOrder])
+}
+
+model ModifierGroup {
+  id                String    @id @default(cuid())
+  menuItemId        String
+  menuItem          MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  
+  name              String    // "Size", "Add-ons", "Toppings"
+  description       String?
+  
+  // Rules
+  required          Boolean   @default(false)
+  minSelections     Int       @default(0)
+  maxSelections     Int       @default(1) // 1 = single select, >1 = multi-select
+  
+  sortOrder         Int       @default(0)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  modifiers         Modifier[]
+  
+  @@index([menuItemId])
+}
+
+model Modifier {
+  id                String    @id @default(cuid())
+  groupId           String
+  group             ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  name              String    // "Large", "Extra Cheese"
+  price             Float     @default(0) // Additional price
+  
+  isDefault         Boolean   @default(false)
+  isAvailable       Boolean   @default(true)
+  
+  sortOrder         Int       @default(0)
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([groupId])
+}
+
+// ============================================
+// ORDERS
+// ============================================
+model Order {
+  id                String    @id @default(cuid())
+  orderNumber       String    // Human-readable: "MT-001234"
+  
+  restaurantId      String
+  restaurant        Restaurant @relation(fields: [restaurantId], references: [id])
+  
+  // Customer Info
+  customerName      String
+  customerEmail     String?
+  customerPhone     String
+  
+  // Order Type
+  orderType         String    // "pickup", "delivery"
+  
+  // Delivery Info
+  deliveryAddress   String?
+  deliveryCity      String?
+  deliveryState     String?
+  deliveryZip       String?
+  deliveryInstructions String?
+  
+  // Scheduling
+  scheduledFor      DateTime? // null = ASAP
+  estimatedReady    DateTime?
+  
+  // Status
+  status            String    @default("pending") // pending, confirmed, preparing, ready, out_for_delivery, completed, cancelled
+  
+  // Pricing
+  subtotal          Float
+  tax               Float     @default(0)
+  deliveryFee       Float     @default(0)
+  tip               Float     @default(0)
+  discount          Float     @default(0)
+  total             Float
+  
+  // Payment
+  paymentStatus     String    @default("pending") // pending, paid, failed, refunded
+  paymentMethod     String?   // "card", "cash"
+  stripePaymentId   String?
+  
+  // Notes
+  specialInstructions String?
+  internalNotes     String?
+  
+  // Timestamps
+  placedAt          DateTime  @default(now())
+  confirmedAt       DateTime?
+  preparedAt        DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  items             OrderItem[]
+  
+  @@index([restaurantId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([placedAt])
+}
+
+model OrderItem {
+  id                String    @id @default(cuid())
+  orderId           String
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  menuItemId        String
+  menuItem          MenuItem  @relation(fields: [menuItemId], references: [id])
+  
+  name              String    // Snapshot of item name at time of order
+  quantity          Int       @default(1)
+  unitPrice         Float     // Price at time of order
+  
+  // Modifiers (JSON snapshot)
+  modifiers         Json?     // [{ name: "Large", price: 2.00 }, ...]
+  modifiersTotal    Float     @default(0)
+  
+  specialInstructions String?
+  
+  total             Float     // (unitPrice + modifiersTotal) * quantity
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([orderId])
+  @@index([menuItemId])
+}
+
+// ============================================
+// CUSTOMER (for order history, optional accounts)
+// ============================================
+model Customer {
+  id                String    @id @default(cuid())
+  
+  email             String?
+  phone             String
+  name              String
+  
+  // Address (saved for delivery)
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([phone])
+  @@index([email])
+}

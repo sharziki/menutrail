@@ -2,40 +2,63 @@
 
 **Project:** MenuTrail - Kill Owner.com
 **Started:** 2026-02-08 17:36 UTC
-**Last update:** 2026-02-08 17:40 UTC
+**Last update:** 2026-02-08 18:05 UTC
 
 ---
 
-## Current Phase: Research ✅ → Setup
+## Current Phase: Menu Builder - Core Components ✅
 
 ## Completed
 - [x] Created GitHub repo (sharziki/menutrail)
-- [x] Researched Owner.com (features, pricing, positioning)
-- [x] Researched competitors (Square, GloriaFood, Toast)
-- [x] Found key weakness: Owner.com has 2.8/5 on Trustpilot (data privacy concerns)
-- [x] Identified our angle: "Canva of restaurant menus" - 6 unique layouts
-- [x] Created PRODUCT.md with full competitive analysis
+- [x] Market research (Owner.com, Square, GloriaFood, Toast)
+- [x] Created PRODUCT.md with competitive analysis
+- [x] Next.js 14 project setup with all dependencies
+- [x] Prisma database schema (Restaurant, Menu, Orders)
+- [x] Menu types and layout configuration
+- [x] MenuItemCard component (5 variants: grid, list, card, compact, hero)
+- [x] All 6 layout components:
+  - [x] GridLayout (Instagram-style)
+  - [x] ListLayout (classic scannable)
+  - [x] CardLayout (swipeable cards)
+  - [x] TabsLayout (horizontal category tabs)
+  - [x] HeroLayout (full-page immersive)
+  - [x] CompactLayout (text-dense traditional)
+- [x] MenuDisplay wrapper component
+- [x] Demo page with layout switcher
+- [x] Demo data (realistic menu items)
+- [x] Shopping cart drawer
 
 ## In Progress
-- [ ] Project scaffolding (Next.js 14 + Supabase + shadcn)
+- [ ] Build test and verify all layouts work
+- [ ] Polish animations and transitions
 
 ## Next Up
-- [ ] Design system + component library
-- [ ] Database schema
-- [ ] Menu Builder - Layout 1: Grid
+- [ ] Menu Builder Editor (drag-drop, live preview)
+- [ ] Theme customization panel
+- [ ] Online ordering flow
+- [ ] Stripe integration
 
 ## Blocked
 (none)
 
 ---
 
-## Key Insights from Research
+## Technical Decisions Made
+1. Using Framer Motion for all animations (smooth, React-native)
+2. 6 distinct layouts that actually look different (not just CSS tweaks)
+3. Demo page doubles as marketing tool (shows all layouts)
+4. Cart is client-side state for now (will persist to DB later)
 
-1. **Owner.com's weakness:** Data privacy issues, uses customer data to sell to competitors
-2. **Market gap:** No one offers real menu customization - everyone looks the same
-3. **Our hook:** 6 layout templates that make each restaurant unique
-4. **Speed target:** 10 minutes from signup to accepting orders
-5. **Pricing angle:** No customer fees (Owner charges 5% to customers)
+---
+
+## Files Created This Session
+- `/prisma/schema.prisma` - Full database schema
+- `/src/types/menu.ts` - TypeScript types
+- `/src/components/menu/MenuItemCard.tsx` - Multi-variant item card
+- `/src/components/menu/layouts/*.tsx` - 6 layout components
+- `/src/components/menu/MenuDisplay.tsx` - Layout switcher
+- `/src/lib/demo-data.ts` - Sample menu data
+- `/src/app/demo/page.tsx` - Interactive demo page
 
 ---
 
@@ -44,9 +67,10 @@
 | Phase | Status | ETA |
 |-------|--------|-----|
 | Research | ✅ Done | - |
-| Project Setup | 🔄 In Progress | 30 min |
-| Design System | ⏳ Pending | 2-3 hours |
-| Menu Builder (6 layouts) | ⏳ Pending | 1-2 days |
-| Online Ordering | ⏳ Pending | 1 day |
-| KDS/Operations | ⏳ Pending | 1 day |
-| Polish + Testing | ⏳ Pending | 1 day |
+| Project Setup | ✅ Done | - |
+| Menu Layouts (6) | ✅ Done | - |
+| Demo Page | ✅ Done | - |
+| Menu Builder Editor | 🔄 Next | 3-4 hours |
+| Online Ordering | ⏳ Pending | 4-6 hours |
+| KDS/Operations | ⏳ Pending | 3-4 hours |
+| Polish + Testing | ⏳ Pending | 2-3 hours |

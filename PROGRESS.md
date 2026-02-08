@@ -6,7 +6,7 @@
 
 ---
 
-## Current Phase: Kitchen Display + Dashboard 🔄
+## Current Phase: Auth + Multi-tenant 🔄
 
 ## Completed
 - [x] Created GitHub repo (sharziki/menutrail)
@@ -29,15 +29,20 @@
 - [x] Order success page with confetti + timeline
 - [x] Order cancel page
 - [x] Stripe webhooks
+- [x] Table Management System (floor plan, seating, reservations, QR codes)
+- [x] Order Dashboard (Kanban board, printing, status updates)
+- [x] Customer Order Tracking Page (real-time status, dasher info, map)
+- [x] DoorDash Webhooks (status updates, location tracking)
+- [x] Address Autocomplete (Google Places + DoorDash delivery check)
 
 ## In Progress
-- [ ] Kitchen Display System (KDS)
-- [ ] Restaurant dashboard
-
-## Next Up
-- [ ] Analytics
 - [ ] Auth (Supabase)
 - [ ] Multi-tenant routing
+
+## Next Up
+- [ ] Analytics dashboard
+- [ ] Email notifications (Resend)
+- [ ] Kitchen Display System (tablet view)
 
 ## Blocked
 (none)

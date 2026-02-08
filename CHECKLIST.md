@@ -12,14 +12,14 @@
 - [x] **1. Multi-photo menu items** - Upload multiple photos for hover animations ✅
 - [x] **2. Custom CTA per restaurant** - Add/customize call-to-action for each restaurant ✅
 - [x] **3. Multiple menus support** - Like fresh fish marketplace (multiple menu sections) ✅
-- [🔄] **4. Address autopopulate API** - Integrate address autocomplete in onboarding (endpoint exists)
-- [🔄] **5. Real dashboard data** - Replace demo data with real data on dashboard (API endpoints created)
+- [x] **4. Address autopopulate API** - Integrate address autocomplete in onboarding ✅
+- [x] **5. Real dashboard data** - Replace demo data with real data on dashboard ✅
 - [ ] **6. VPS deployment** - Get server + everything live on VPS
 - [x] **7. Demo/sandbox mode** - DoorDash sandbox mode for test deliveries ✅
 - [x] **8. Go High Level integration** - Auto-create/update contacts on orders ✅
 - [ ] *(skipped in original)*
 - [x] **10. Gift cards** - Allow customers to purchase gift cards ✅
-- [ ] **11. Documentation** - Detailed GitHub docs for Pakistani dev
+- [x] **11. Documentation** - Detailed GitHub docs for Pakistani dev ✅
 - [x] **12. Mobile 2x2 grid layout** - Sidebar/main layout on mobile like Sizzle Fish ✅
 - [x] **13. Mobile modals fix** - Click item to bring up popup with modifiers ✅
 - [x] **14. Category descriptions** - Display category descriptions on menu ✅
@@ -38,13 +38,13 @@
 | 1 | Multi-photo menu items | ✅ Done | 2026-02-08 | Hover animations with image cycling |
 | 2 | Custom CTA per restaurant | ✅ Done | 2026-02-08 | Added ctaText/ctaUrl to Restaurant |
 | 3 | Multiple menus support | ✅ Done | 2026-02-08 | Menu selector with filtering |
-| 4 | Address autopopulate API | 🔄 Partial | 2026-02-08 | Endpoint at /api/address/autocomplete |
-| 5 | Real dashboard data | 🔄 Partial | 2026-02-08 | APIs created, needs Prisma integration |
+| 4 | Address autopopulate API | ✅ Done | 2026-02-08 | Full integration with Google Places |
+| 5 | Real dashboard data | ✅ Done | 2026-02-08 | All APIs using Prisma |
 | 6 | VPS deployment | ⏳ Pending | | |
 | 7 | Demo/sandbox mode | ✅ Done | 2026-02-08 | DoorDash sandbox with test UI |
 | 8 | Go High Level integration | ✅ Done | 2026-02-08 | Contact sync with order notes |
 | 10 | Gift cards | ✅ Done | 2026-02-08 | Purchase, redeem, balance check |
-| 11 | Documentation | ⏳ Pending | | |
+| 11 | Documentation | ✅ Done | 2026-02-08 | DOCS.md with full dev guide |
 | 12 | Mobile 2x2 grid layout | ✅ Done | 2026-02-08 | grid-cols-2 on all screens |
 | 13 | Mobile modals fix | ✅ Done | 2026-02-08 | Full modifier popup with scroll |
 | 14 | Category descriptions | ✅ Done | 2026-02-08 | Shown below category tabs |
@@ -58,6 +58,8 @@
 
 ## Remaining Work
 
-1. **Documentation (Item 11)** - Write README and developer docs
-2. **VPS Deployment (Item 6)** - Set up server and deploy
-3. **Complete Prisma Integration (Items 4-5)** - Connect APIs to real database
+1. **VPS Deployment (Item 6)** - Set up server and deploy
+
+---
+
+## Completed: 18/19 items ✅

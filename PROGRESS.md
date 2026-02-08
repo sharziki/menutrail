@@ -2,11 +2,11 @@
 
 **Project:** MenuTrail - Kill Owner.com
 **Started:** 2026-02-08 17:36 UTC
-**Last update:** 2026-02-08 18:05 UTC
+**Last update:** 2026-02-08 19:55 UTC
 
 ---
 
-## Current Phase: Menu Builder - Core Components ✅
+## Current Phase: Online Ordering Flow 🔄
 
 ## Completed
 - [x] Created GitHub repo (sharziki/menutrail)
@@ -16,27 +16,30 @@
 - [x] Prisma database schema (Restaurant, Menu, Orders)
 - [x] Menu types and layout configuration
 - [x] MenuItemCard component (5 variants: grid, list, card, compact, hero)
-- [x] All 6 layout components:
-  - [x] GridLayout (Instagram-style)
-  - [x] ListLayout (classic scannable)
-  - [x] CardLayout (swipeable cards)
-  - [x] TabsLayout (horizontal category tabs)
-  - [x] HeroLayout (full-page immersive)
-  - [x] CompactLayout (text-dense traditional)
+- [x] All 6 layout components (Grid, List, Card, Tabs, Hero, Compact)
 - [x] MenuDisplay wrapper component
 - [x] Demo page with layout switcher
 - [x] Demo data (realistic menu items)
 - [x] Shopping cart drawer
+- [x] Landing page with hero, features, pricing, testimonials
+- [x] Menu Builder Editor with:
+  - [x] Drag-drop reordering (categories and items)
+  - [x] Live preview pane
+  - [x] Item editor (image, name, desc, price, tags, availability)
+  - [x] Category editor (name, description, availability hours)
+  - [x] Theme editor (colors, fonts, corners)
+  - [x] Layout selector (all 6 layouts)
 
 ## In Progress
-- [ ] Build test and verify all layouts work
-- [ ] Polish animations and transitions
+- [ ] Online ordering flow
+- [ ] Checkout page
+- [ ] Order confirmation
 
 ## Next Up
-- [ ] Menu Builder Editor (drag-drop, live preview)
-- [ ] Theme customization panel
-- [ ] Online ordering flow
 - [ ] Stripe integration
+- [ ] Kitchen Display System (KDS)
+- [ ] Restaurant dashboard
+- [ ] Analytics
 
 ## Blocked
 (none)

@@ -211,7 +211,31 @@ export async function POST(request: NextRequest) {
 }
 
 // Demo mode handler
-function handleDemoMode(customerInfo: any, orderData: any) {
+interface CustomerInfo {
+  firstName: string
+  lastName: string
+  email?: string
+  phone: string
+  address?: {
+    street?: string
+    city?: string
+    state?: string
+    zip?: string
+  }
+}
+
+interface OrderData {
+  orderNumber?: string
+  orderId?: string
+  orderType?: string
+  items?: Array<{ name: string; quantity: number; price: number }>
+  subtotal?: number
+  tax?: number
+  total?: number
+  createdAt?: string
+}
+
+function handleDemoMode(customerInfo: CustomerInfo, orderData: OrderData) {
   const phoneKey = customerInfo.phone.replace(/\D/g, "")
   
   let contact = demoContacts.get(phoneKey)
@@ -273,9 +297,9 @@ function handleDemoMode(customerInfo: any, orderData: any) {
 }
 
 // Format order as note
-function formatOrderNote(orderData: any, orderCount: number): string {
+function formatOrderNote(orderData: OrderData, orderCount: number): string {
   const itemsList = orderData.items
-    ?.map((item: any) => `  • ${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`)
+    ?.map((item: { name: string; quantity: number; price: number }) => `  • ${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`)
     .join("\n") || "  (No items)"
 
   return `📦 Order #${orderData.orderNumber || orderData.orderId || "N/A"}

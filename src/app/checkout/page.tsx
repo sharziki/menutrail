@@ -9,7 +9,10 @@ import {
   CreditCard,
   Truck,
   Store,
-  Loader2
+  Loader2,
+  Gift,
+  Check,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +48,16 @@ export default function CheckoutPage() {
     zip: "",
     instructions: "",
   })
+  
+  // Gift card state
+  const [giftCardCode, setGiftCardCode] = useState("")
+  const [giftCardLoading, setGiftCardLoading] = useState(false)
+  const [giftCardApplied, setGiftCardApplied] = useState<{
+    code: string
+    balance: number
+    amountToUse: number
+  } | null>(null)
+  const [giftCardError, setGiftCardError] = useState("")
   const [contactInfo, setContactInfo] = useState({
     firstName: "",
     lastName: "",
@@ -86,7 +99,43 @@ export default function CheckoutPage() {
     ? parseFloat(customTip) || 0 
     : subtotal * TIP_OPTIONS[selectedTip].multiplier
   
-  const total = subtotal + tax + deliveryFee + tipAmount
+  const subtotalWithExtras = subtotal + tax + deliveryFee + tipAmount
+  const giftCardDiscount = giftCardApplied?.amountToUse || 0
+  const total = Math.max(0, subtotalWithExtras - giftCardDiscount)
+
+  const applyGiftCard = async () => {
+    if (!giftCardCode) return
+    setGiftCardLoading(true)
+    setGiftCardError("")
+    
+    try {
+      const res = await fetch(`/api/giftcards?code=${encodeURIComponent(giftCardCode)}`)
+      const data = await res.json()
+      
+      if (data.valid && data.balance > 0) {
+        // Use up to the full balance or the total, whichever is less
+        const amountToUse = Math.min(data.balance, subtotalWithExtras)
+        setGiftCardApplied({
+          code: giftCardCode.toUpperCase(),
+          balance: data.balance,
+          amountToUse,
+        })
+        setGiftCardCode("")
+      } else {
+        setGiftCardError(data.error || "Invalid gift card")
+      }
+    } catch (_err) {
+      void _err
+      setGiftCardError("Failed to validate gift card")
+    } finally {
+      setGiftCardLoading(false)
+    }
+  }
+
+  const removeGiftCard = () => {
+    setGiftCardApplied(null)
+    setGiftCardError("")
+  }
 
   const handleCheckout = async () => {
     setIsLoading(true)
@@ -324,6 +373,74 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Gift Card */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Gift className="w-5 h-5 text-green-500" />
+                <h2 className="text-lg font-semibold">Gift Card</h2>
+              </div>
+              
+              {giftCardApplied ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Check className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-green-800">{giftCardApplied.code}</p>
+                        <p className="text-sm text-green-600">
+                          -${giftCardApplied.amountToUse.toFixed(2)} applied
+                          {giftCardApplied.balance > giftCardApplied.amountToUse && (
+                            <span className="text-green-500">
+                              {" "}(${(giftCardApplied.balance - giftCardApplied.amountToUse).toFixed(2)} remaining)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeGiftCard}
+                      className="text-gray-400 hover:text-red-500 transition"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter gift card code"
+                      value={giftCardCode}
+                      onChange={(e) => {
+                        setGiftCardCode(e.target.value.toUpperCase())
+                        setGiftCardError("")
+                      }}
+                      className="font-mono"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={applyGiftCard}
+                      disabled={giftCardLoading || !giftCardCode}
+                    >
+                      {giftCardLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Apply"
+                      )}
+                    </Button>
+                  </div>
+                  {giftCardError && (
+                    <p className="text-sm text-red-500">{giftCardError}</p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Try demo codes: DEMO-GIFT-CARD or TEST-1234-5678
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Tip */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold mb-4">Add a Tip</h2>
@@ -408,6 +525,12 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-gray-600">
                     <span>Tip</span>
                     <span>${tipAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {giftCardApplied && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Gift Card</span>
+                    <span>-${giftCardApplied.amountToUse.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { demoCategories, demoRestaurant } from "@/lib/demo-data"
@@ -8,7 +9,7 @@ import { MenuDisplay } from "@/components/menu/MenuDisplay"
 import { LayoutType, LAYOUT_CONFIG, MenuItem } from "@/types/menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, X, Plus, Minus, Trash2 } from "lucide-react"
+import { ShoppingCart, X, Plus, Minus, Trash2, Gift } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCartStore } from "@/lib/store/cart"
 
@@ -54,20 +55,30 @@ export default function DemoPage() {
               <p className="text-sm text-gray-500">{demoRestaurant.description}</p>
             </div>
 
-            {/* Cart Button */}
-            <Button
-              variant="outline"
-              className="relative"
-              onClick={() => setShowCart(true)}
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Cart
-              {cartCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">
-                  {cartCount}
-                </Badge>
-              )}
-            </Button>
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <Link href="/giftcards">
+                <Button variant="outline" size="sm">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Gift Cards
+                </Button>
+              </Link>
+              
+              {/* Cart Button */}
+              <Button
+                variant="outline"
+                className="relative"
+                onClick={() => setShowCart(true)}
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Cart
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">
+                    {cartCount}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </header>

@@ -721,12 +721,25 @@ export default function OrdersDashboard() {
                   </div>
                 </div>
                 
-                {/* Actions */}
+                {/* Actions - Item 18: Added backward navigation */}
                 <div className="space-y-3">
-                  <Button className="w-full" onClick={() => printOrder(selectedOrder)}>
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print Order
-                  </Button>
+                  <div className="flex gap-2">
+                    {/* Backward button - Item 18 */}
+                    {selectedOrder.status !== "new" && selectedOrder.status !== "completed" && selectedOrder.status !== "cancelled" && (
+                      <Button 
+                        variant="outline"
+                        className="flex-none"
+                        onClick={() => moveOrderBack(selectedOrder.id)}
+                        title="Move back to previous status"
+                      >
+                        ← Back
+                      </Button>
+                    )}
+                    <Button className="flex-1" onClick={() => printOrder(selectedOrder)}>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print Order
+                    </Button>
+                  </div>
                   {selectedOrder.status === "new" && (
                     <Button 
                       className="w-full bg-orange-500 hover:bg-orange-600"
@@ -743,6 +756,33 @@ export default function OrdersDashboard() {
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Mark Ready
+                    </Button>
+                  )}
+                  {selectedOrder.status === "ready" && selectedOrder.type === "delivery" && (
+                    <Button 
+                      className="w-full bg-purple-500 hover:bg-purple-600"
+                      onClick={() => updateStatus(selectedOrder.id, "out_for_delivery")}
+                    >
+                      <Truck className="w-4 h-4 mr-2" />
+                      Send Out for Delivery
+                    </Button>
+                  )}
+                  {selectedOrder.status === "ready" && selectedOrder.type !== "delivery" && (
+                    <Button 
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      onClick={() => updateStatus(selectedOrder.id, "completed")}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Complete Order
+                    </Button>
+                  )}
+                  {selectedOrder.status === "out_for_delivery" && (
+                    <Button 
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      onClick={() => updateStatus(selectedOrder.id, "completed")}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Mark Delivered
                     </Button>
                   )}
                   {selectedOrder.status !== "cancelled" && selectedOrder.status !== "completed" && (

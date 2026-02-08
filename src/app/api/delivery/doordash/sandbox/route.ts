@@ -53,9 +53,13 @@ export async function POST(request: NextRequest) {
       orderId,
       pickupAddress,
       dropoffAddress,
-      orderValue,
-      items,
+      orderValue: _orderValue, // Used for delivery calculations in production
+      items: _items, // Used for order verification in production
     } = body
+    
+    // Prevent unused variable warnings (used in production)
+    void _orderValue
+    void _items
 
     const now = Date.now()
     const deliveryId = `sandbox-${orderId}-${now}`

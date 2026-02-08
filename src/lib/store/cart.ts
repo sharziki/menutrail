@@ -8,6 +8,7 @@ export interface CartItem {
   quantity: number
   image?: string
   modifiers?: { name: string; price: number }[]
+  notes?: string
 }
 
 interface CartStore {

@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { restaurantId = "demo", settings: updates } = body
 
-    let settings = settingsStore.get(restaurantId) || { ...defaultSettings }
+    const settingsData = settingsStore.get(restaurantId) || { ...defaultSettings }
 
     // Update allowed fields
     const allowedFields: (keyof RestaurantSettings)[] = [
@@ -90,11 +90,12 @@ export async function PUT(request: NextRequest) {
 
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
-        (settings as any)[field] = updates[field]
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (settingsData as any)[field] = updates[field]
       }
     }
 
-    settingsStore.set(restaurantId, settings)
+    settingsStore.set(restaurantId, settingsData)
 
     return NextResponse.json({
       success: true,

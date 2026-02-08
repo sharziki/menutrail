@@ -6,6 +6,11 @@ import jwt from "jsonwebtoken"
 
 const DOORDASH_API_URL = "https://openapi.doordash.com"
 
+// Check if sandbox mode is enabled
+function isSandboxMode(): boolean {
+  return process.env.DOORDASH_SANDBOX_MODE === "true"
+}
+
 interface DeliveryRequest {
   orderId: string
   pickupAddress: {
@@ -60,6 +65,19 @@ function generateDoorDashJWT(): string {
 export async function POST(request: NextRequest) {
   try {
     const body: DeliveryRequest = await request.json()
+    
+    // Check for sandbox mode - redirect to sandbox endpoint
+    if (isSandboxMode()) {
+      const sandboxResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/delivery/doordash/sandbox`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      )
+      return NextResponse.json(await sandboxResponse.json())
+    }
     
     // Validate required env vars
     if (!process.env.DOORDASH_DEVELOPER_ID || !process.env.DOORDASH_KEY_ID) {
@@ -139,6 +157,14 @@ export async function GET(request: NextRequest) {
         { error: "Delivery ID required" },
         { status: 400 }
       )
+    }
+
+    // Check if it's a sandbox delivery or sandbox mode is enabled
+    if (deliveryId.startsWith("sandbox-") || isSandboxMode()) {
+      const sandboxResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/delivery/doordash/sandbox?id=${deliveryId}`
+      )
+      return NextResponse.json(await sandboxResponse.json())
     }
 
     const token = generateDoorDashJWT()

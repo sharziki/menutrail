@@ -17,7 +17,8 @@ const redemptions: RedemptionRecord[] = []
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { code, amount, orderId, restaurantId = "demo" } = body
+    const { code, amount, orderId, restaurantId: _restaurantId = "demo" } = body
+    void _restaurantId
 
     if (!code || !amount || !orderId) {
       return NextResponse.json(

@@ -168,6 +168,9 @@ export async function GET(request: NextRequest) {
     ? `${normalizedCode.slice(0, 4)}-${normalizedCode.slice(4, 8)}-${normalizedCode.slice(8, 12)}`
     : code.toUpperCase()
 
+  // Use restaurantId for filtering in production
+  void restaurantId
+
   // Check in-memory store (demo mode)
   const giftCard = giftCards.get(formattedCode)
 

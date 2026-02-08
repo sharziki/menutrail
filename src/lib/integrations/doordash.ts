@@ -272,7 +272,7 @@ export class DoorDashClient {
       dasherPhone = "+1 (555) 123-4567"
     }
 
-    const now = new Date()
+    // const now = new Date() // Unused - for future use
     return {
       status,
       trackingUrl: `/track/${deliveryId}?sandbox=true`,

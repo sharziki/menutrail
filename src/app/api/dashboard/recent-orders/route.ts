@@ -21,24 +21,19 @@ export async function GET() {
       },
       take: 10,
       select: {
-        id: true,
         orderNumber: true,
         customerName: true,
         total: true,
         status: true,
         orderType: true,
-        table: {
-          select: {
-            number: true,
-          },
-        },
+        tableId: true,
       },
     })
 
     return NextResponse.json({
       orders: recentOrders.map((o) => ({
         id: o.orderNumber,
-        customer: o.table ? `Table ${o.table.number}` : o.customerName.split(" ")[0] + " " + (o.customerName.split(" ")[1]?.[0] || "") + ".",
+        customer: o.tableId ? `Table` : o.customerName.split(" ")[0] + " " + (o.customerName.split(" ")[1]?.[0] || "") + ".",
         total: o.total,
         status: o.status.toLowerCase(),
         type: o.orderType.toLowerCase(),

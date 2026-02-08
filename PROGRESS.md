@@ -6,7 +6,7 @@
 
 ---
 
-## Current Phase: Online Ordering Flow 🔄
+## Current Phase: Kitchen Display + Dashboard 🔄
 
 ## Completed
 - [x] Created GitHub repo (sharziki/menutrail)
@@ -22,24 +22,22 @@
 - [x] Demo data (realistic menu items)
 - [x] Shopping cart drawer
 - [x] Landing page with hero, features, pricing, testimonials
-- [x] Menu Builder Editor with:
-  - [x] Drag-drop reordering (categories and items)
-  - [x] Live preview pane
-  - [x] Item editor (image, name, desc, price, tags, availability)
-  - [x] Category editor (name, description, availability hours)
-  - [x] Theme editor (colors, fonts, corners)
-  - [x] Layout selector (all 6 layouts)
+- [x] Menu Builder Editor with live preview
+- [x] Stripe payment integration
+- [x] DoorDash Drive delivery integration
+- [x] Checkout page (delivery/pickup, address, tip, contact)
+- [x] Order success page with confetti + timeline
+- [x] Order cancel page
+- [x] Stripe webhooks
 
 ## In Progress
-- [ ] Online ordering flow
-- [ ] Checkout page
-- [ ] Order confirmation
-
-## Next Up
-- [ ] Stripe integration
 - [ ] Kitchen Display System (KDS)
 - [ ] Restaurant dashboard
+
+## Next Up
 - [ ] Analytics
+- [ ] Auth (Supabase)
+- [ ] Multi-tenant routing
 
 ## Blocked
 (none)
